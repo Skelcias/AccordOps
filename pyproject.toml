@@ -1,0 +1,23 @@
+[project]
+name = "accordops"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Arthur Robert", email = "arthur.robert@airtahitinui.pf" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+accordops = "accordops:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.8",
+]
