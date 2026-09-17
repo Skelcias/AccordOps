@@ -5,35 +5,57 @@ def read_csv(path:str)->list:
       reader = csv.DictReader(file)
       return list(reader)
    
-def compare_with_policy(policy_value:float,expense_value:float)->str:
-    return 'Conforme' if  expense_value - policy_value <= 0 else f'Non conforme de {expense_value - policy_value:.2f} $'
+def compare_with_policy(policy_value:float,expense_value:float)->tuple[str,str | None]:
+    return ('Conforme',None) if expense_value - policy_value <= 0 else ('non_conforme', f"{expense_value - policy_value:.2f}")
 
 def compare_policy_to_expense(policy:list,expenses:list)->list:
    answers = []
    policy_by_category = {} 
+   
    for rule in policy:
        policy_by_category[rule["category"]] = float(rule["max_amount"])
 
    for expense in expenses:
+    errors = []
     amount = expense["amount"]
     category = expense["category"] 
-   
+    id = expense["id"]
+
     if category not in policy_by_category:
-        print(f"Catégorie inconnue : {category}")
+        errors.append("Catégorie inconnue")
+        answers.append({
+        "id": id,
+        "category": category,
+        "status": "ERROR",
+        "difference": None,
+        "error": errors,
+    })
         continue
+
     try:
         amount = float(amount)
     except ValueError:
-        print(f"Montant invalide ! : {amount}")
+        errors.append("Montant Invalide") 
+        answers.append({
+        "id": id,
+        "category": category,
+        "status": "ERROR",
+        "difference": None,
+        "error": errors,
+    })
         continue
-   
-    answers.append(
-        compare_with_policy(
-               policy_by_category[category],
-               amount
-            )
-         )
 
+    s,d = compare_with_policy(policy_by_category[category],amount)
+    answers.append(
+       {
+          "id":id,
+          "category":category,
+          "status" : s,
+          "difference" : d,
+          "error" : errors
+
+       }
+    )
    return answers
 if __name__ == '__main__':
    
@@ -41,12 +63,10 @@ if __name__ == '__main__':
    policy = read_csv('dataset/policy.csv')
    expenses = read_csv('dataset/expenses.csv')
 
-   print(policy)
-   print(expenses)
-#    answers:list = compare_policy_to_expense(policy,expenses)
+   answers:list = compare_policy_to_expense(policy,expenses)
 
-#    for answer in answers:
-#       print(answer)
+   for answer in answers:
+      print(answer)
 
 
 #gestion catégorie manquantes ou valeur pas convetisable en float 
