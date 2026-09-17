@@ -1,0 +1,11 @@
+CREATE TABLE policy (
+    id INT PRIMARY KEY,
+    category  VARCHAR(150) UNIQUE NOT NULL,
+    max_amount  DECIMAL(10,2) NOT NULL CHECK(max_amount>=0)
+);
+
+CREATE TABLE expenses(
+    id INT PRIMARY KEY,
+    category VARCHAR(150) NOT NULL,
+    amount  DECIMAL(10,2) NOT NULL CHECK(amount>=0)
+);

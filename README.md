@@ -57,3 +57,18 @@ Le programme doit également gérer proprement au minimum :
 
 * une catégorie sans règle correspondante ;
 * un montant invalide.
+
+## Niveau 1 — Persistance PostgreSQL
+
+### Objectif
+
+Remplacer les fichiers CSV par une base PostgreSQL persistante contenant les dépenses et les politiques de remboursement.
+
+### Stack
+
+- PostgreSQL
+- SQL
+- psycopg
+- Docker
+- Python
+- pytest

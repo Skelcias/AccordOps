@@ -7,7 +7,10 @@ authors = [
     { name = "Arthur Robert", email = "arthur.robert@airtahitinui.pf" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.3.5",
+    "python-dotenv>=1.2.3",
+]
 
 [project.scripts]
 accordops = "accordops:main"
