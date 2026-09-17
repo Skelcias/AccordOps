@@ -1,5 +1,4 @@
 import csv
-
 def read_csv(path:str)->list:
    with open(path,newline='',encoding="utf-8") as file:
       reader = csv.DictReader(file)
