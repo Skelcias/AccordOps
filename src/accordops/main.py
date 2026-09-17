@@ -1,4 +1,6 @@
 import csv
+from accordops.db import get_connection,get_expenses,get_policies
+
 def read_csv(path:str)->list:
    with open(path,newline='',encoding="utf-8") as file:
       reader = csv.DictReader(file)
@@ -58,14 +60,15 @@ def compare_policy_to_expense(policy:list,expenses:list)->list:
    return answers
 if __name__ == '__main__':
    
-
-   policy = read_csv('dataset/policy.csv')
-   expenses = read_csv('dataset/expenses.csv')
-
+   
+#    policy = read_csv('dataset/policy.csv')
+#    expenses = read_csv('dataset/expenses.csv')
+   with get_connection() as conn : 
+    policy = get_policies(conn)
+    expenses = get_expenses(conn)
    answers:list = compare_policy_to_expense(policy,expenses)
 
    for answer in answers:
       print(answer)
 
 
-#gestion catégorie manquantes ou valeur pas convetisable en float 
