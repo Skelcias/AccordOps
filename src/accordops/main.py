@@ -18,13 +18,36 @@ def compare_with_policy(policy_value:float,expense_value:float)->str:
  
 if __name__ == '__main__':
    answers = []
+      
+   policy_by_category = {} 
+        
+   for rule in policy:
+    policy_by_category[rule["category"]] = float(rule["max_amount"])
+          
    for expense in expenses:
-       for rule in policy:
-           if expense["category"] == rule["category"]:
-               answers.append(compare_with_policy(float(rule["max_amount"]),float(expense["amount"])))
+      amount = expense["amount"]
+      category = expense["category"] 
+
+      if category not in policy_by_category:
+         print(f"Catégorie inconnue : {category}")
+         continue
+      try:
+         amount = float(amount)
+      except ValueError:
+         print(f"Montant invalide ! : {amount}")
+         continue
+
+      answers.append(
+         compare_with_policy(
+            policy_by_category[category],
+            amount
+         )
+      )
+
+       
+
+   for answer in answers:
+      print(answer)
 
 
-for elem in answers:
-    print(elem)
-
-
+#gestion catégorie manquantes ou valeur pas convetisable en float 
