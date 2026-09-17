@@ -40,11 +40,13 @@ if __name__ == '__main__':
 
    policy = read_csv('dataset/policy.csv')
    expenses = read_csv('dataset/expenses.csv')
-        
-   answers:list = compare_policy_to_expense(policy,expenses)
 
-   for answer in answers:
-      print(answer)
+   print(policy)
+   print(expenses)
+#    answers:list = compare_policy_to_expense(policy,expenses)
+
+#    for answer in answers:
+#       print(answer)
 
 
 #gestion catégorie manquantes ou valeur pas convetisable en float 
