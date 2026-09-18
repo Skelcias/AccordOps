@@ -68,3 +68,13 @@ def get_expenses(conn):
                 )        
                expenses = cursor.fetchall()
                return expenses
+
+def get_expense_by_id(conn,id):
+        with conn.cursor(row_factory=dict_row) as cursor:
+                cursor.execute(
+                        "SELECT * FROM expenses WHERE id = %s",
+                        (id,)
+                      
+                )
+                expense = cursor.fetchone()
+                return expense
