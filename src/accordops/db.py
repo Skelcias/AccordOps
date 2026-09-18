@@ -18,6 +18,12 @@ def get_connection():
     return conn
 
 # Ajouter 
+def add_policy(conn,id:int,category:str,max_amount:float):
+        with conn.cursor() as cursor:
+                cursor.execute(
+                     "INSERT INTO policy (id, category, max_amount) VALUES(%s,%s,%s)",
+                     (id,category,max_amount)
+                )
 
 def add_expense(conn,id:int,category:str,amount:float):
         with conn.cursor() as cursor:
