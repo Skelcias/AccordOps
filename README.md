@@ -72,3 +72,48 @@ Remplacer les fichiers CSV par une base PostgreSQL persistante contenant les dé
 - Docker
 - Python
 - pytest
+
+### Fonctionnalités réalisées
+
+- création du schéma SQL ;
+- persistance des données avec un volume Docker ;
+- connexion Python à PostgreSQL avec psycopg ;
+- opérations CRUD sur les dépenses ;
+- transactions et rollback ;
+- tests d'intégration avec PostgreSQL ;
+- migrations SQL ;
+- identifiants générés automatiquement avec `IDENTITY`.
+
+### Critère de validation
+
+Les données doivent rester présentes après redémarrage du conteneur PostgreSQL et les tests d'intégration doivent passer.
+
+
+## Niveau 2 — API HTTP avec FastAPI
+
+### Objectif
+
+Exposer les fonctionnalités d'AccordOps via une API HTTP.
+
+### Stack
+
+- FastAPI
+- Uvicorn
+- Pydantic
+- PostgreSQL
+- psycopg
+
+### Fonctionnalités actuelles
+
+- démarrage d'une API FastAPI ;
+- documentation Swagger automatique avec `/docs` ;
+- `GET /expenses` pour récupérer toutes les dépenses ;
+- `GET /expenses/{id}` pour récupérer une dépense précise ;
+- gestion d'une dépense inexistante avec une erreur HTTP `404`.
+
+### Étapes suivantes
+
+- `POST /expenses` ;
+- validation des données avec Pydantic ;
+- mise à jour et suppression via l'API ;
+- gestion plus propre des erreurs HTTP.
