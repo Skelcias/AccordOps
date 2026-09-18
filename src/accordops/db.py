@@ -28,9 +28,11 @@ def add_policy(conn,category:str,max_amount:float):
 def add_expense(conn,category:str,amount:float):
         with conn.cursor() as cursor:
                 cursor.execute(
-                     "INSERT INTO expenses (category, amount) VALUES(%s,%s)",
+                     "INSERT INTO expenses (category, amount) VALUES(%s,%s) RETURNING id",
                      (category,amount)
                 )
+                row = cursor.fetchone()
+                return row[0]
 
 # Modifier 
 

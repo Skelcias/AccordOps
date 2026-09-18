@@ -1,5 +1,11 @@
 from fastapi import FastAPI, HTTPException
-from accordops.db import get_expenses,get_connection,get_expense_by_id
+from accordops.db import get_expenses,get_connection,get_expense_by_id,add_expense
+from pydantic import BaseModel
+
+class ExpenseCreate(BaseModel):
+    category : str
+    amount : float
+
 
 app = FastAPI()
 
@@ -19,3 +25,13 @@ async def get_expense(item_id:int):
                 detail="Expense not found"
             )
         return expense
+
+@app.post("/expenses")
+async def create_expense(expense:ExpenseCreate):
+    with get_connection() as conn:
+        new_id = add_expense(conn,expense.category,expense.amount)
+        return {
+    "id": new_id,
+    "category": expense.category,
+    "amount": expense.amount
+        }
