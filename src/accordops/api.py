@@ -1,28 +1,21 @@
 from fastapi import FastAPI, HTTPException, Response, status
+from accordops.services import (
+    get_expense_service,
+    update_expense_service,
+    delete_expense_service,
+    get_policy_service,
+    update_policy_service,
+    ExpenseNotFoundError,
+    PolicyNotFoundError,
+)
+from accordops.schemas import ExpenseCreate, ExpenseUpdate, PolicyCreate, PolicyUpdate
 from accordops.db import (
     get_expenses,
     get_connection,
-    get_expense_by_id,
     add_expense,
-    update_expense_amount,
-    delete_expense,
     get_policies,
     add_policy,
-    update_policy,
-    get_policy_by_id,
 )
-from pydantic import BaseModel
-from typing import Optional
-
-
-class ExpenseCreate(BaseModel):
-    category: str
-    amount: float
-
-
-class ExpenseUpdate(BaseModel):
-    amount: Optional[float] = None
-
 
 app = FastAPI()
 
@@ -36,11 +29,10 @@ async def list_expenses():
 
 @app.get("/expenses/{item_id}")
 async def get_expense(item_id: int):
-    with get_connection() as conn:
-        expense = get_expense_by_id(conn, item_id)
-        if expense is None:
-            raise HTTPException(status_code=404, detail="Expense not found")
-        return expense
+    try:
+        return get_expense_service(item_id)
+    except ExpenseNotFoundError:
+        raise HTTPException(404)
 
 
 @app.post("/expenses")
@@ -52,33 +44,20 @@ async def create_expense(expense: ExpenseCreate):
 
 @app.patch("/expenses/{item_id}")
 async def update_expense(item_id: int, expense_update: ExpenseUpdate):
-    with get_connection() as conn:
-        existing_expense = get_expense_by_id(conn, item_id)
-        if existing_expense is None:
-            raise HTTPException(status_code=404, detail="Expense not found")
-        update_expense_amount(conn, item_id, expense_update.amount)
-        updated_expense = get_expense_by_id(conn, item_id)
-        return updated_expense
+    try:
+        expense = update_expense_service(item_id, expense_update.amount)
+    except ExpenseNotFoundError:
+        raise HTTPException(404)
+    return expense
 
 
 @app.delete("/expenses/{id}")
 async def delete_exp(id: int):
-    with get_connection() as conn:
-        existing_expense = get_expense_by_id(conn, id)
-        if existing_expense is None:
-            raise HTTPException(status_code=404, detail="Expense not found")
-        delete_expense(conn, id)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-class PolicyCreate(BaseModel):
-    category: str
-    max_amount: float
-
-
-class PolicyUpdate(BaseModel):
-    category: str
-    max_amount: float
+    try:
+        delete_expense_service(id)
+    except ExpenseNotFoundError:
+        raise HTTPException(404)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/policies")
@@ -89,16 +68,10 @@ async def list_policies():
 
 @app.get("/policies/{policy_id}")
 async def get_policy(policy_id: int):
-    with get_connection() as conn:
-        policy = get_policy_by_id(conn, policy_id)
-
-        if policy is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Policy not found",
-            )
-
-        return policy
+    try:
+        return get_policy_service(policy_id)
+    except PolicyNotFoundError:
+        raise HTTPException(404)
 
 
 @app.post("/policies")
@@ -119,20 +92,12 @@ async def create_policy(policy: PolicyCreate):
 
 @app.patch("/policies/{policy_id}")
 async def patch_policy(policy_id: int, policy: PolicyUpdate):
-    with get_connection() as conn:
-        existing_policy = get_policy_by_id(conn, policy_id)
-
-        if existing_policy is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Policy not found",
-            )
-
-        update_policy(
-            conn,
-            policy_id,
-            policy.category,
-            policy.max_amount,
+    try:
+        policy = update_policy_service(
+            policy_id=policy_id,
+            new_category=policy.category,
+            new_amount=policy.max_amount,
         )
-
-        return get_policy_by_id(conn, policy_id)
+    except PolicyNotFoundError:
+        raise HTTPException(404)
+    return policy
