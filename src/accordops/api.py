@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import FastAPI, HTTPException, Response, status, UploadFile
 from accordops.services import (
     get_expense_service,
     update_expense_service,
     delete_expense_service,
     get_policy_service,
     update_policy_service,
+    pdf_extraction,
     ExpenseNotFoundError,
     PolicyNotFoundError,
 )
@@ -101,3 +102,20 @@ async def patch_policy(policy_id: int, policy: PolicyUpdate):
     except PolicyNotFoundError:
         raise HTTPException(404)
     return policy
+
+
+@app.post("/receipts")
+async def post_receipt(file: UploadFile):
+    if file.content_type not in ("application/pdf", "image/png", "image/jpeg"):
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    text = ""
+    content = await file.read()
+    if file.content_type == "application/pdf":
+        text = pdf_extraction(content)
+
+    return {
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "size": len(content),
+        "text": text,
+    }

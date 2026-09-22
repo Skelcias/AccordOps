@@ -6,6 +6,8 @@ from accordops.db import (
     get_policy_by_id,
     update_policy,
 )
+import io
+from pypdf import PdfReader
 from decimal import Decimal
 
 
@@ -74,3 +76,15 @@ def _get_policy_or_raise(conn, policy_id: int):
     if policy is None:
         raise PolicyNotFoundError
     return policy
+
+
+def pdf_extraction(content):
+    # creation objet python lisible par pyPDF
+    file_like_object = io.BytesIO(content)
+    reader = PdfReader(file_like_object)
+    text_content = []
+    for page in reader.pages:
+        page_text = page.extract_text()
+        if page_text:
+            text_content.append(page_text)
+    return "\n".join(text_content)
