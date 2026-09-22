@@ -89,11 +89,13 @@ Remplacer les fichiers CSV par une base PostgreSQL persistante contenant les dé
 Les données doivent rester présentes après redémarrage du conteneur PostgreSQL et les tests d'intégration doivent passer.
 
 
+---
+
 ## Niveau 2 — API HTTP avec FastAPI
 
 ### Objectif
 
-Exposer les fonctionnalités d'AccordOps via une API HTTP.
+Exposer les fonctionnalités d'AccordOps via une API HTTP afin de séparer la logique applicative de l'interface utilisée par le client.
 
 ### Stack
 
@@ -102,18 +104,157 @@ Exposer les fonctionnalités d'AccordOps via une API HTTP.
 - Pydantic
 - PostgreSQL
 - psycopg
+- Python
 
-### Fonctionnalités actuelles
+### Fonctionnalités réalisées
 
-- démarrage d'une API FastAPI ;
-- documentation Swagger automatique avec `/docs` ;
-- `GET /expenses` pour récupérer toutes les dépenses ;
-- `GET /expenses/{id}` pour récupérer une dépense précise ;
-- gestion d'une dépense inexistante avec une erreur HTTP `404`.
+API CRUD sur les dépenses :
 
-### Étapes suivantes
+- `GET /expenses`
+- `GET /expenses/{id}`
+- `POST /expenses`
+- `PATCH /expenses/{id}`
+- `DELETE /expenses/{id}`
 
-- `POST /expenses` ;
-- validation des données avec Pydantic ;
-- mise à jour et suppression via l'API ;
-- gestion plus propre des erreurs HTTP.
+API sur les politiques :
+
+- `GET /policies`
+- `GET /policies/{id}`
+- `POST /policies`
+- `PATCH /policies/{id}`
+
+La documentation Swagger générée automatiquement par FastAPI est accessible via :
+
+```text
+/docs
+```
+
+### Validation des données
+
+Les données reçues par l'API sont décrites avec des modèles Pydantic.
+
+Les montants utilisent désormais `Decimal` plutôt que `float` afin d'éviter les approximations binaires sur les valeurs monétaires.
+
+Exemple de validation :
+
+```python
+amount: Decimal = Field(ge=0)
+```
+
+Les montants négatifs sont donc rejetés avant même d'atteindre la base de données.
+
+### Refactor v1
+
+Le projet commence à séparer les responsabilités :
+
+```text
+api.py
+    ↓
+services.py
+    ↓
+db.py
+    ↓
+PostgreSQL
+```
+
+- `api.py` : gestion HTTP, routes et codes d'erreur ;
+- `schemas.py` : modèles Pydantic des données entrantes ;
+- `services.py` : orchestration et logique métier ;
+- `db.py` : accès SQL à PostgreSQL.
+
+Les erreurs métier, par exemple `ExpenseNotFoundError`, sont levées dans la couche service puis traduites en erreurs HTTP par l'API.
+
+Une opération métier utilisant plusieurs requêtes SQL partage une seule connexion afin de pouvoir rester dans la même transaction.
+
+### Critère de validation
+
+L'API doit permettre de créer, consulter, modifier et supprimer une dépense, avec :
+
+- validation des entrées ;
+- génération automatique des identifiants ;
+- persistance PostgreSQL ;
+- réponses HTTP cohérentes ;
+- erreurs `404` pour les ressources inexistantes.
+
+---
+
+## Niveau 3 — Traitement de justificatifs
+
+### Objectif
+
+Permettre à AccordOps de recevoir des justificatifs réels plutôt que des données déjà structurées manuellement.
+
+Le flux cible devient progressivement :
+
+```text
+justificatif
+    ↓
+extraction du contenu
+    ↓
+texte brut
+    ↓
+LLM
+    ↓
+données structurées
+    ↓
+moteur de conformité AccordOps
+```
+
+### L3.0 — Upload de justificatifs
+
+Une route :
+
+```text
+POST /receipts
+```
+
+permet de recevoir un fichier via FastAPI avec `UploadFile`.
+
+Types actuellement autorisés :
+
+- `application/pdf`
+- `image/png`
+- `image/jpeg`
+
+Les fichiers non supportés produisent une erreur HTTP `400`.
+
+Le fichier est actuellement traité directement en mémoire et n'est pas sauvegardé sur disque.
+
+### L3.1 — Extraction de texte PDF
+
+Les PDF contenant déjà du texte sont traités avec `PyPDF`.
+
+Flux :
+
+```text
+UploadFile
+    ↓
+await file.read()
+    ↓
+bytes
+    ↓
+BytesIO
+    ↓
+PdfReader
+    ↓
+extract_text()
+    ↓
+texte brut
+```
+
+`BytesIO` transforme les bytes présents en mémoire en un objet se comportant comme un fichier, ce qui permet à `PdfReader` de le lire sans créer de fichier temporaire sur disque.
+
+Le texte est extrait page par page puis concaténé.
+
+### Étape suivante
+
+L3.2 ajoutera l'extraction de texte depuis les images et les PDF scannés grâce à un OCR.
+
+Cette étape préparera ensuite l'utilisation d'un LLM pour transformer le texte brut en données structurées telles que :
+
+```text
+merchant
+date
+amount
+category
+```

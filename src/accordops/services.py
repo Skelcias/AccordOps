@@ -9,6 +9,8 @@ from accordops.db import (
 import io
 from pypdf import PdfReader
 from decimal import Decimal
+from PIL import Image
+import pytesseract
 
 
 class ExpenseNotFoundError(Exception):
@@ -88,3 +90,9 @@ def pdf_extraction(content):
         if page_text:
             text_content.append(page_text)
     return "\n".join(text_content)
+
+
+def image_extraction(content):
+    image = Image.open(io.BytesIO(content))
+    texte = pytesseract.image_to_string(image)
+    return texte

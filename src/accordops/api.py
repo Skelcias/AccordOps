@@ -6,6 +6,7 @@ from accordops.services import (
     get_policy_service,
     update_policy_service,
     pdf_extraction,
+    image_extraction,
     ExpenseNotFoundError,
     PolicyNotFoundError,
 )
@@ -112,7 +113,8 @@ async def post_receipt(file: UploadFile):
     content = await file.read()
     if file.content_type == "application/pdf":
         text = pdf_extraction(content)
-
+    elif file.content_type in ("image/jpeg", "image/png"):
+        text = image_extraction(content)
     return {
         "filename": file.filename,
         "content_type": file.content_type,
