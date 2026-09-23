@@ -16,15 +16,19 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # print(response.output_text)
 
 
-def extract_receipt(text: str):
+def extract_receipt(text: str, allowed_categories: list[str]):
     response = client.responses.parse(
         model="gpt-5.6-luna",
         input=[
             {
                 "role": "system",
-                "content": "Extract the receipt information. "
-                "Do not invent missing information. "
-                "Use null when information is unavailable.",
+                "content": (
+                    "Extract the expense information. "
+                    "Do not invent missing information. "
+                    "Use null when information is unavailable. "
+                    f"Category must be one of: {allowed_categories}. "
+                    "If none clearly matches, use null."
+                ),
             },
             {"role": "user", "content": text},
         ],
@@ -39,4 +43,4 @@ Restaurant Chez Marcel
 Total : 42.50 EUR
 """
 
-print(extract_receipt(text))
+# print(extract_receipt(text))

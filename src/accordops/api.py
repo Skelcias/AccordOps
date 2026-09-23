@@ -7,6 +7,7 @@ from accordops.services import (
     update_policy_service,
     pdf_extraction,
     image_extraction,
+    extract_ticket_service,
     ExpenseNotFoundError,
     PolicyNotFoundError,
 )
@@ -24,7 +25,6 @@ from accordops.db import (
     get_policies,
     add_policy,
 )
-from accordops.llm import extract_receipt
 
 app = FastAPI()
 
@@ -117,18 +117,19 @@ async def post_receipt(file: UploadFile):
     if file.content_type not in ("application/pdf", "image/png", "image/jpeg"):
         raise HTTPException(status_code=400, detail="Unsupported file type")
     text = ""
-    expense: TicketExpenseLLM | None = None
+    expense = None
     content = await file.read()
     if file.content_type == "application/pdf":
         text = pdf_extraction(content)
 
     elif file.content_type in ("image/jpeg", "image/png"):
         text = image_extraction(content)
-
+    if text.strip():
+        expense = extract_ticket_service(text)
     return {
         "filename": file.filename,
         "content_type": file.content_type,
         "size": len(content),
         "text": text,
-        "expense": extract_receipt(text) if text.strip() else None,
+        "expense": expense,
     }

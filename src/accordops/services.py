@@ -5,12 +5,15 @@ from accordops.db import (
     delete_expense,
     get_policy_by_id,
     update_policy,
+    get_policies,
 )
 import io
 from pypdf import PdfReader
 from decimal import Decimal
 from PIL import Image
 import pytesseract
+from accordops.schemas import *
+from accordops.llm import extract_receipt
 
 
 class ExpenseNotFoundError(Exception):
@@ -96,3 +99,22 @@ def image_extraction(content):
     image = Image.open(io.BytesIO(content))
     texte = pytesseract.image_to_string(image)
     return texte
+
+
+def _to_ticket_expense(llm_expense: TicketExpenseLLM) -> TicketExpense:
+    return TicketExpense(
+        merchant=llm_expense.merchant,
+        date=llm_expense.date,
+        category=llm_expense.category,
+        amount=Decimal(str(llm_expense.amount)) if llm_expense is not None else None,
+    )
+
+
+def extract_ticket_service(text: str) -> TicketExpense:
+    with get_connection() as conn:
+        policies = get_policies(conn)
+
+    allowed_categories = [policy["category"] for policy in policies]
+
+    llm_expense = extract_receipt(text, allowed_categories)
+    return _to_ticket_expense(llm_expense)
