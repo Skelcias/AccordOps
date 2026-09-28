@@ -93,3 +93,10 @@ def get_policy_by_id(conn, id):
         cursor.execute("SELECT * FROM policy WHERE id =%s", (id,))
         policy = cursor.fetchone()
         return policy
+
+
+def get_policy_by_category(conn, category):
+    with conn.cursor(row_factory=dict_row) as cursor:
+        cursor.execute("SELECT * FROM policy WHERE category =%s", (category,))
+        policy = cursor.fetchone()
+        return policy

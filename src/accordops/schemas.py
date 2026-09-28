@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field
 from decimal import Decimal
+from typing import Literal
+
+STATUS = Literal["conforme", "non conforme", "review"]
 
 
 class ExpenseCreate(BaseModel):
@@ -33,3 +36,12 @@ class TicketExpenseLLM(BaseModel):
     date: str | None = None
     amount: float | None = Field(default=None, ge=0)
     category: str | None = None
+
+
+class ComplianceResult(BaseModel):
+    status: STATUS | None = None
+    category: str | None = None
+    amount: Decimal | None = Field(default=None, ge=0)
+    max_amount: Decimal | None = Field(default=None, ge=0)
+    difference: Decimal | None = None
+    reason: str | None = None

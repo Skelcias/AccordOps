@@ -8,6 +8,7 @@ from accordops.services import (
     pdf_extraction,
     image_extraction,
     extract_ticket_service,
+    check_ticket_expense,
     ExpenseNotFoundError,
     PolicyNotFoundError,
 )
@@ -126,10 +127,5 @@ async def post_receipt(file: UploadFile):
         text = image_extraction(content)
     if text.strip():
         expense = extract_ticket_service(text)
-    return {
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "size": len(content),
-        "text": text,
-        "expense": expense,
-    }
+        compliance = check_ticket_expense(expense)
+    return compliance

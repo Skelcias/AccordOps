@@ -6,6 +6,7 @@ from accordops.db import (
     get_policy_by_id,
     update_policy,
     get_policies,
+    get_policy_by_category,
 )
 import io
 from pypdf import PdfReader
@@ -118,3 +119,40 @@ def extract_ticket_service(text: str) -> TicketExpense:
 
     llm_expense = extract_receipt(text, allowed_categories)
     return _to_ticket_expense(llm_expense)
+
+
+def check_ticket_expense(expense: TicketExpense) -> ComplianceResult:
+    policy = None
+    status = ""
+    reason = ""
+    difference = None
+
+    if expense.category is not None:
+        with get_connection() as conn:
+            policy = get_policy_by_category(conn, expense.category)
+
+    if policy is None or expense.amount is None or expense.category is None:
+        return ComplianceResult(
+            status="review",
+            category=expense.category,
+            amount=expense.amount,
+            max_amount=policy["max_amount"] if policy is not None else None,
+            difference=None,
+            reason="Informations insuffisantes pour vérifier la conformité",
+        )
+    difference = expense.amount - policy["max_amount"]
+    if difference <= 0:
+        status = "conforme"
+        reason = "Le montant dépensé respecte le maximum autorisé"
+    else:
+        status = "non conforme"
+        reason = "La dépense est supérieure au montant maximum imposé par la charte entreprise"
+
+    return ComplianceResult(
+        status=status,
+        category=expense.category,
+        amount=expense.amount,
+        max_amount=policy["max_amount"] if policy is not None else None,
+        difference=difference,
+        reason=reason,
+    )
