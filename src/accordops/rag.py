@@ -3,16 +3,22 @@ from pathlib import Path
 
 def chunker(path: Path):
     sections = []
-    section = []
+    category = None
     with path.open() as f:
         for line in f:
-            if line.startswith("##"):
-                if section:
-                    sections.append(section)
-                section = [line]
-            else:
-                section.append(line)
-    if section:
-        sections.append(section)
+            line = line.strip()
 
-    return ["\n".join(section).strip() for section in sections]
+            if line.startswith("##"):
+                category = line.removeprefix("## ").strip().lower()
+                continue
+            if line.startswith("# ") or not line:
+                continue
+            if category is not None:
+                sections.append(
+                    {
+                        "category": category,
+                        "content": f"{category} -- {line}",
+                    }
+                )
+
+    return sections

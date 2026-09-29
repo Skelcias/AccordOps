@@ -112,3 +112,13 @@ def get_policy_by_category(conn, category):
         cursor.execute("SELECT * FROM policy WHERE category =%s", (category,))
         policy = cursor.fetchone()
         return policy
+
+
+def search_similar_chunks(conn, query_embedding, limit=3):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT category, source, content, embedding <=> %s::vector AS distance FROM document_chunks ORDER BY distance LIMIT %s",
+            (query_embedding, limit),
+        )
+        chunks = cursor.fetchall()
+        return chunks
