@@ -1,4 +1,5 @@
 import psycopg
+from pgvector.psycopg import register_vector
 from psycopg.rows import dict_row
 import os
 from dotenv import load_dotenv
@@ -15,6 +16,7 @@ def get_connection():
         host="localhost",
         port=5433,
     )
+    register_vector(conn)
     return conn
 
 
@@ -32,6 +34,16 @@ def add_expense(conn, category: str, amount: float):
         cursor.execute(
             "INSERT INTO expenses (category, amount) VALUES(%s,%s) RETURNING id",
             (category, amount),
+        )
+        row = cursor.fetchone()
+        return row[0]
+
+
+def add_document_chunk(conn, category, source, content, embedding):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO document_chunks(category,source,content,embedding) VALUES(%s,%s,%s,%s) RETURNING id",
+            (category, source, content, embedding),
         )
         row = cursor.fetchone()
         return row[0]
